@@ -210,6 +210,81 @@ fit_alt = lm(price ~stars + borough, data = nyc_airbnb)
 anova(fit_null, fit_alt) |> 
   broom::tidy()
 
+```
 
+
+##nest data, fit models
+
+
+this is pretty formal and also complex
+```{r}
+fit = lm(price ~ stars * borough + room_type * borough, data = nyc_airbnb)
+
+broom::tidy(fit)
+
+```
+
+this is more exploratory but maybe easier to understand
+
+```{r}
+nyc_airbnb |> 
+  nest(data = -borough) |> 
+  mutate(
+    models = map(.x = data, ~lm(price~stars, data =.x)),
+    results = map(models, broom::tidy)
+  ) |> 
+  select(-data, -models) |> 
+  unnest(results) |> 
+  filter(term == "stars")
+
+##shows you the relationship between borough and stars by borough (so not comparing across boroughs or in reference to each other)
+
+nyc_airbnb |> 
+  nest(data = -borough) |> 
+  mutate(
+    models = map(.x = data, ~lm(price~stars, data =.x)),
+    results = map(models, broom::tidy)
+  ) |> 
+  select(-data, -models) |> 
+  unnest(results) |> 
+  filter(term != "(Intercept)") |> 
+  select(borough, term, estimate) |> 
+  pivot_wider(
+    names_from = borough,
+    values_from = estimate)
+  )
+```
+
+let's nest even more
+
+```{r}
+
+nyc_airbnb |> 
+  filter(borough == "Manhattan") |> 
+  nest(data = -neighborhood)|> 
+  mutate(
+    models = map(.x = data, ~lm(price~stars, data =.x)),
+    results = map(models, broom::tidy)
+  ) |> 
+  select(-data, -models) |> 
+  unnest(results)
+
+##shows the impact of stars on price by neighborhood
+
+nyc_airbnb |> 
+  filter(borough == "Manhattan") |> 
+  nest(data = -neighborhood)|> 
+  mutate(
+    models = map(.x = data, ~lm(price~stars, data =.x)),
+    results = map(models, broom::tidy)
+  ) |> 
+  select(-data, -models) |> 
+  unnest(results) |> 
+  filter(str_detect(term, "room_type")) |> 
+  ggplot(aes(x = neighborhood, y = estimate))+
+  geom_point() +
+  facet_wrap(.~term)
+
+##not sure why viz isn't working
 ```
 
