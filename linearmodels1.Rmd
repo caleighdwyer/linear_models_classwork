@@ -166,3 +166,50 @@ broom::tidy(fit)
 broom::glance(fit)
 ```
 
+
+##Diagnostics
+
+```{r}
+residuals(fit)
+
+modelr::add_residuals(nyc_airbnb, fit)
+
+##this shows how well your model fits
+
+modelr::add_residuals(nyc_airbnb, fit) |> 
+  ggplot(aes(x= borough, y = resid))+
+  geom_violin()+
+  ylim(-500, 1500)
+
+##shows that manhattan and brooklyn have some really big residuals (due to outlying data)
+
+nyc_airbnb |> 
+  modelr::add_residuals(fit) |> 
+  ggplot(aes(x=stars, y = resid))+ 
+  geom_point()+
+  facet_wrap(.~borough)
+
+##shows wider distribution of residuals as you increase in star count in manhattan and brooklyn
+```
+
+##hypothesis tests
+
+this does t test by default
+```{r}
+fit |> 
+  broom::tidy()
+```
+
+
+what about significance of borough? You wanna use at anova (in the above,  you were only getting comparisons to the reference)
+
+```{r}
+fit_null = lm(price ~stars, data = nyc_airbnb)
+fit_alt = lm(price ~stars + borough, data = nyc_airbnb)
+
+anova(fit_null, fit_alt) |> 
+  broom::tidy()
+
+
+```
+
