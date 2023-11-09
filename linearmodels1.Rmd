@@ -62,4 +62,107 @@ arguments include:
 Formula: y ~ x1 + x2
 Data
 
-output is complex, and also kind of a mess, so we use the broom package.
+output is complex, and also kind of a mess, so we use the broom package. Broom package is used for a lot of different functions/commands
+
+define data frame
+fit model
+tidy results
+
+
+```{r}
+library(tidyverse)
+library(p8105.datasets)
+
+set.seed(1)
+
+```
+
+
+```{r}
+data("nyc_airbnb")
+
+nyc_airbnb = 
+  nyc_airbnb |> 
+  mutate(stars = review_scores_location / 2) |> 
+  rename(
+    borough = neighbourhood_group,
+    neighborhood = neighbourhood) |> 
+  filter(borough != "Staten Island") |> 
+  select(price, stars, borough, neighborhood, room_type)
+```
+
+
+##fit a model
+
+```{r}
+nyc_airbnb |> 
+  ggplot(aes(x= stars, y = price, color = borough))+
+  geom_point()
+```
+
+
+```{r}
+fit = lm(price ~ stars + borough, data = nyc_airbnb)
+```
+
+let's look at the result...
+
+```{r, include = FALSE}
+fit
+
+summary(fit)
+summary(fit)$coef
+coef(fit)
+fitted.values(fit)
+residuals(fit)
+##we don't usually look at these things because it's a matrix and kinda messy
+```
+
+
+```{r}
+broom::glance(fit)
+
+##this formats as a tibble
+
+broom::tidy(fit)
+
+#this is an even better dataframe. will show you the estimate for each category (borough) compared to the reference group
+
+broom::tidy(fit) |> 
+  select(-std.error, -statistic) |> 
+  mutate(
+    term = str_replace(term, "borough", "Borough: ")
+  ) |> 
+  knitr::kable(digits = 3)
+
+##this gives you a very clean table
+
+```
+
+
+## Be in control of factors
+```{r}
+nyc_airbnb =
+  nyc_airbnb |> 
+  mutate(
+    borough = fct_infreq(borough),
+    room_type = fct_infreq(room_type))
+  )
+
+nyc_airbnb |> 
+  ggplot(aes(x= stars, y = price, color = borough))+
+  geom_point()
+
+##use factor reorder to organize borough by frequency of room type, this will make sure that the reference group used by the model is the one with the most observations. When you wanna start interpreting coefficients, it's important to use a logical/feasible reference group
+```
+
+
+
+```{r}
+fit = lm(price ~ stars + borough, data = nyc_airbnb)
+
+broom::tidy(fit)
+
+broom::glance(fit)
+```
+
