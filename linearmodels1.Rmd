@@ -1,0 +1,65 @@
+---
+title: "linear_models_1"
+author: "Caleigh Dwyer"
+date: "2023-11-09"
+output: github_document
+---
+
+lecture notes
+
+##linear models
+
+Observe data for subjects 1 to n. Want to estimate the coefficients in the model.
+
+y = b0 (the y intercept) + B1x1 (b1 is the effect of the predictor on the relationship between x and y)
+
+Assumptinos: residuals have mean zero, constant variance, and are independent
+
+estimate parameters using OLS
+
+Outcome is continuous, predictors can be anything. Continuous predictors are added directly
+
+categorical predictors require "dummy" or indicator variable
+-For each non-reference group, a binary 0/1 variable indicating group membership for each subject is created and used in the model
+
+B1 = (B0 + B1 + B2) - (B0 + B2)
+  = E(y| age = 1, sex = male) - E(y|age = 0, sex = male)
+  [E is the expected value]
+  expected change in y for a one unit cahnge in age, keeping sex fixed
+
+##Testing
+
+For a single regression coefficient, you can construct a test statistic:
+
+t = (B -b)/se(B)
+
+for large samples, the test statistic has a standard normal distribution
+
+to test multiple coefficients (i.e. categorical variable w/ multiple predictros) you can use an F test (ANOVA)
+
+##Diagnostics
+
+Many model assumptions (constant variance, model specification, etc.) can be examined using residuals
+- look at overall distribution (centered? skewed? outliers?)
+- look at residuals vs. predictors (any non-linearity? Trends? Non-constant residual variance?)
+
+##generalized linear models
+
+appropriate for non-continuous outcomes
+common example is logistic regression:
+
+logit(P(Y=1|x)/P(Y=0)|x) = b0 + b1x1...
+
+b1 for a log regression is an odds ratio, so very interpretable. 
+
+##linear models in R
+
+lm for linear models
+
+glm for generalized linear models
+
+arguments include:
+Formula: y ~ x1 + x2
+Data
+
+output is complex, and also kind of a mess, so we use the broom package.
