@@ -147,7 +147,80 @@ rmse(wiggly_mod, test_df)
 ^^
 RMSE on testing data gives a sense of out of sample prediction accuracy.
 
-```{r}
+## Use modelr for CV (cross val)
 
+```{r}
+cv_df = 
+  nonlin_df |> 
+  crossv_mc(n=100) |> 
+  mutate(
+    train = map(train, as_tibble),
+    test = map(test, as_tibble)
+  )
+
+##this takes nonlinear dataframe and splits it into a training and testing datasets (in two different columns)
+```
+
+
+```{r}
+cv_df |> pull(train) |> nth(3) |> as_tibble()
+```
+
+apply each model to all training datasetss, and evaluate on all testing datasets
+
+```{r}
+cv_results = 
+  cv_df |> 
+  mutate(
+    linear_fit = map(train, \(df) lm(y~x, data = df))
+
+
+##this is the same as doing:
+
+lin_mod_funct = function(df){
+  lm(y~x, data = df)
+}
+
+cv_results = cv_df |> 
+  mutate(
+    linear_fit = map(train, lin_mod_funct)
+  )
+```
+
+
+```{r}
+ cv_results = 
+  cv_df |> 
+  mutate(
+    linear_fit = map(train, \(df) lm(y~x, data = df)),
+    smooth_fit = map(train, \(df) mgcv::gam(y~s(x), data = df)),
+    wiggly_fit = map(train, \(df) mgcv::gam(y~s(x, k = 30), sp =10e-6, data = df))
+    ) |> 
+  mutate(
+    rmse_linear = map2_dbl(linear_fit, test, \(mod, df) rmse(mod, df)),
+    rmse_smooth = map2_dbl(smooth_fit, test, \(mod, df) rmse(mod, df)),
+    rmse_wiggly = map2_dbl(wiggly_fit, test, \(mod, df) rmse(mod, df))
+  )
+
+##this style with the backslash is called an anonymous function
+##map2_dbl is a helper function that says if you know your output is one number, it will just automatically unnest
+```
+
+
+```{r}
+cv_results |> 
+  select(starts_with("rmse")) |> 
+  pivot_longer(
+    everything(),
+    names_to = "model_type",
+    values_to = "rmse",
+    names_prefix = "rmse_"
+  ) |> 
+  group_by(model_type) |> 
+  summarize(m_rmse = mean(rmse)) |> 
+  ggplot(aes(x = model_type, y = rmse))+
+  geom_violin()
+
+##viz not working, but is supposed to show variability in prediction accuracy between the three models
 ```
 
