@@ -224,3 +224,5 @@ cv_results |>
 ##viz not working, but is supposed to show variability in prediction accuracy between the three models
 ```
 
+
+problem with smooth lines for prediction is that the slope isn't interpretable. It might be a closer fit, but it's difficult to communicate/interpret
