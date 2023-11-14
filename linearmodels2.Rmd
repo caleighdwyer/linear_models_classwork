@@ -1,0 +1,153 @@
+---
+title: "linearmodels2"
+author: "Caleigh Dwyer"
+date: "2023-11-14"
+output: github_document
+---
+
+## CROSS VALIDATION: lecture notes
+
+Model selection
+
+When there are lots of possible variables, you have to choose which ones go in your model. In best case, you have a clear hypothesis you want to test in the context of known confounders. (however, this is not how it always works)
+
+For nested models (set variables, then thinking about adding one), you have tests you can use, you just have to worry about multiple comparisons and fishing
+
+For non-nested models, you don't have tests
+-AIC/BIC are traditional tools
+-balance goodness of fit w/ complexity
+
+Questioning fit: 
+-is my model comlex enough? too complex?
+-am i underfitting? overfitting?
+-Do i have high bias? high variance?
+
+Out-of-smaple goodness of fit:
+-will my model generalize to future datasets?
+
+*prediction accuracy*
+ideally, you could: build your model given a dataset, go out and get new data, confirm your model works for new data
+
+*cross val*
+Randomly split your data into "training" and "testing"
+-training is data u use to build model
+-testing is to see how well the model works
+
+Refinements:
+repeat the process. illustrates variability in prediction accuracy. can indicate whether differences in models are consistent across splits
+-"folding": randomly partition data so that you can do repeated testing and training
+
+Cross val comes up a lot in "modern" methods (e.g., automated variable selection, additive models, regression trees)
+
+Prediction = goal
+-prediction accuracy is a different goal than statistical significance
+-models that make poor predictions probably don't adequately describe the data generating mechanism, and that's bad.
+
+Tools for today:
+Modelr:
+-add_predictions and add_residuals
+-rmse (root mean sqaure error)
+-crossv_mc
+
+list columns and map are important cuz you wanna iterate your cross val!
+
+```{r}
+library(tidyverse)
+set.seed(1)
+library(modelr)
+```
+
+## Nonlinear data and CV
+
+```{r}
+nonlin_df = 
+  tibble(
+    id =1:100,
+    x = runif(100,0,1),
+    y= 1-10*(x-.3)^2+rnorm(100,0,0.3)
+  )
+
+nonlin_df |> 
+  ggplot(aes(x=x, y=y))+
+  geom_point()
+```
+
+
+do the train/test split
+
+```{r}
+train_df = sample_n(nonlin_df, 80)
+test_df = anti_join(nonlin_df, train_df, by = "id")
+```
+
+
+```{r}
+train_df |> 
+  ggplot(aes(x=x, y=y))+
+  geom_point()+
+  geom_point(data = test_df, color = "red")
+```
+
+create a model for the black dots and then test it to see how well it predicts the red dots
+
+```{r}
+linear_mod = lm(y~x, data=train_df)
+smooth_mod = mgcv::gam(y~s(x), data = train_df)
+wiggly_mod = mgcv::gam(y ~s(x,k=30), sp = 10e-6, data = train_df)
+```
+
+quick viz (draws a fitted lined through observed values)
+
+```{r}
+train_df |> 
+  modelr::add_predictions(linear_mod) |> 
+  ggplot(aes(x=x, y =y))+
+  geom_point()+
+  geom_path(aes(y=pred))
+```
+
+compare against smooth model
+```{r}
+train_df |> 
+  modelr::add_predictions(smooth_mod) |> 
+  ggplot(aes(x=x, y =y))+
+  geom_point()+
+  geom_path(aes(y=pred))
+
+##this isn't visualizing correctly
+
+```
+
+```{r}
+train_df |> 
+  modelr::add_predictions(wiggly_mod) |> 
+  ggplot(aes(x=x, y =y))+
+  geom_point()+
+  geom_path(aes(y=pred))
+
+##this isn't visualizing correctly
+```
+
+
+```{r}
+rmse(linear_mod, train_df)
+rmse(smooth_mod, train_df)
+rmse(wiggly_mod, train_df)
+
+##you look at which of these models has the lowest rmse (this is the best fit to the data). HOWEVER you also have to think about how reproducible this is. This is a great fit for this data set, but how well is it going to fit when it comes to other datasets? This is when you use the test group.
+
+rmse(linear_mod, test_df)
+rmse(smooth_mod, test_df)
+rmse(wiggly_mod, test_df)
+
+##here, we see that smooth_mod is actually the best for the testing dataset, indicating that the wiggly_mod is only a good fit for the training dataset (not generalizable)
+
+```
+
+^^
+RMSE on testing data gives a sense of out of sample prediction accuracy.
+
+```{r}
+
+```
+
