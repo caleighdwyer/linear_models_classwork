@@ -82,3 +82,27 @@ sim_df_nonconst |>
 ## these have the same outputs, because they ASSUME that you are meeting the assumptions for linear regression, i.e. that errors follow a normal distribution.
 ```
 
+
+## Draw a bootsrap sample (and analyze)
+
+Start with a lil function
+
+```{r}
+boot_sample = function(df){
+  sample_frac(df, replace = TRUE)
+}
+```
+
+let's see how this works
+
+
+```{r}
+sim_df_nonconst |> 
+  boot_sample() |> 
+  ggplot(aes(x=x, y=y))+
+  geom_point(alpha=.5)+
+  stat_smooth(method = "lm")
+
+##if you keep running this, it will produce different linear regressions for each bootstrapped sample
+```
+
