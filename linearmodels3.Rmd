@@ -1,0 +1,42 @@
+---
+title: "linearmodels3"
+author: "Caleigh Dwyer"
+date: "2023-11-16"
+output: html_document
+---
+
+## Linear models - Bootstrapping
+
+Final project --
+Get data cleaning done first. Decide if this can be stored on github or needs to be stored on individual computers. Make it as concrete as possible. Make sure everyone knows what role they'll have in putting together the project. Make sure that those pieces are answering the same overall question. Most common feedback is that people do four individual projects on one cool dataset rather than a cohesive project. Multiple people can work on the same document at the same time, as long as you're clear whihc sections they're working on. 
+
+gitignore is a strategy you can use if you're using confidential patient data. That way, you're never committing data files. You just open up the gitignore file and put the directory name in there.
+
+Repeated sampling
+- conceptual framework underlying all statistics
+- The distribution of the sample mean converges to a normal distribution when sampling repeatedly samples of the same size from a population
+- Data are difficult and expensive to collect, so that's why you do a simulation with fake data 
+
+Bootstrapping: how can you get a dataset to do repeated sampling with one sample
+- idea is to mimic repeated sampling with the one sampley ou have.
+-Your sample is drawn at random from your population; you'd like to draw more samples, but you can't. So you draw a bootstrap sample from the one sample you have. The bootstrap sample has the same size as the original sample, and is drawn with replacement. Analyze this sample using whatever approach you want to apply. Then repeat.
+- looks like it mimics what you would've gotten, had you repeatedly sampled.
+-regression coefficients will be slightly different each time you bootstrap. but if you look at distribution of regression coefficients from bootstrapping, it will follow a normal distribution
+
+Why bootstrap?
+- There are assumptions you need to meet for repeated sampling framework: such as sample means follow known distribution, regression coeff follow known distribution, or odds ratios follow known distribution
+- if assumptions aren't met, sample isn't large enough for asymptotics, or you can't use the "known distribution," then you need bootstrapping. 
+- bootstrapping gets you back to repeated sampling, and uses an empirical 
+
+Bootstrapping is a natural application of iterative tools. 
+
+Write a function (or functions) to:
+- Draw a sample w/ replacement
+- analyze the sample
+- return object of interest
+
+
+```{r}
+
+```
+
