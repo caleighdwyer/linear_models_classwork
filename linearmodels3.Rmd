@@ -106,3 +106,68 @@ sim_df_nonconst |>
 ##if you keep running this, it will produce different linear regressions for each bootstrapped sample
 ```
 
+
+## Draw a lot of samples and analyze them
+
+```{r}
+boot_straps = 
+  tibble(strap_number = 1:100) |> 
+  mutate(
+    strap_sample = map(strap_number, \(i) boot_sample(sim_df_nonconst))
+  )
+
+boot_straps |> 
+  pull(strap_sample) |> 
+  nth(1) |> 
+  arrange(x)
+```
+
+time to analyze bootstrap samples (do the lm fit)
+
+```{r}
+boot_results = 
+  boot_straps |> 
+  mutate(
+    models = map(strap_sample, \(df) lm(y~x, data = df)),
+    results = map(models, broom::tidy)
+  ) |> 
+  select(strap_number, results) |> 
+  unnest(results)
+
+##gets a different slope estimate each time. mimics the actual variability you would see if you had done repeated sampling, but just using the same dataset
+```
+
+
+try to summarize these results -- get a bootstrap SE
+
+```{r}
+boot_results |> 
+  group_by(term) |> 
+  summarize(
+    se = sd(estimate)
+  )
+
+```
+
+look at the distribution
+
+```{r}
+boot_results |> 
+  ggplot(aes(x = estimate))+
+  geom_density()+
+  facet_grid(.~term)
+```
+
+rule of thumb on how many bootstraps to draw: depends on how you plan to summarize results. 
+
+Can i construct a CI?
+
+```{r}
+boot_results |> 
+  group_by(term) |> 
+  summarize(
+    ci_lower = quantile(estimate, 0.025),
+    ci_upper = quantile(estimate, 0.975)
+  )
+```
+
